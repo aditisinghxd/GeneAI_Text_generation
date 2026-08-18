@@ -84,18 +84,18 @@ by contrast, was still decreasing at epoch 10 with no sign of turning back up, c
 smaller capacity (22,637 parameters, about a fifth of LSTM's) needing more training before it would start
 to overfit.
 
-**On FNet:** FNet was the slowest of the three to train, both per epoch (74.8s vs LSTM's 49.3s and GRU's
-39.1s) and in total (747.6s, roughly 1.5-2x either recurrent model). This matches the expected story: the
-causal-windowed FFT is doing real, comparatively unoptimized work on CPU relative to `nn.LSTM`/`nn.GRU`'s
-cuDNN-backed kernels. It's also the clearest illustration in this project of parameter count not being the
-same thing as compute cost: FNet has roughly a fifth of LSTM's parameters but took about 1.5x longer to
-train. On accuracy, FNet's much smaller capacity and narrow 16-character causal window show up directly in
-its final perplexity, at roughly double the two recurrent models'.
+**On FNet:** FNet was the slowest of the three to train, both per epoch (74.8s vs LSTM's
+49.3s and GRU's 39.1s) and in total (747.6s, roughly 1.5-2x either recurrent model).
+Despite having substantially fewer parameters, the causal FNet performs comparatively
+expensive overlapping-window FFT operations, while PyTorch's built-in `nn.LSTM` and
+`nn.GRU` layers use highly optimized native implementations.
 
-*(Note: an earlier partial run on the same machine showed a different, inverted timing pattern, FNet
-fastest and GRU slowest, which didn't reproduce here. Timing on CPU can vary meaningfully between runs
-depending on background system load; the numbers above are from the complete, final run and are the ones
-to trust.)*
+This is also a useful illustration of why parameter count and computational cost are
+not the same thing: FNet has roughly a fifth of LSTM's parameters but took around
+1.5x longer to train in this CPU experiment. On predictive performance, its smaller
+capacity and limited 16-character causal window are reflected in its higher final
+validation perplexity.
+
 
 Sample generations from all three models (same seed text, same temperature) are in the notebook's Part 6.4
 output.
@@ -156,5 +156,4 @@ substantially close FNet's speed gap.
 
 ---
 
-*Built as a hands-on architecture comparison project: LSTM, GRU, and FNet implemented from scratch in
-PyTorch with a shared, fair evaluation methodology.*
+*Built as a hands-on architecture comparison project: LSTM and GRU implemented with PyTorch's recurrent layers, alongside a custom causal FNet adaptation, using a shared evaluation methodology.*
